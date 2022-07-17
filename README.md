@@ -19,7 +19,7 @@ poetry add aiogram-inline-paginations
 ## Create paginations object
 
 ```python
-from paginator import Paginator
+from aiogram_inline_paginations.paginator import Paginator
 from aiogram import types
 
 kb = types.InlineKeyboardMarkup()
@@ -39,7 +39,7 @@ A paginator object that, when called, returns a ready-made keyboard with paginat
 ## Get data for registrations handler paginator
 
 ```python
-from paginator import Paginator
+from aiogram_inline_paginations.paginator import Paginator
 from aiogram import types
 
 kb = types.InlineKeyboardMarkup()
@@ -72,7 +72,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import CommandStart
 from aiogram.utils.executor import Executor
 
-from paginator import Paginator
+from aiogram_inline_paginations.paginator import Paginator
 
 token = 'your token'
 
@@ -151,15 +151,15 @@ if __name__ == '__main__':
 
 First page:
 
-![img_1.png](img/img_1.png)
+![img_1.png](https://github.com/daniilshamraev/aiogram-inline-paginations/blob/master/img/img_1.png?raw=true)
 
 Second page:
 
-![img_2.png](img/img_2.png)
+![img_2.png](https://github.com/daniilshamraev/aiogram-inline-paginations/blob/master/img/img_2.png?raw=true)
 
 Last page:
 
-![img_3.png](img/img_3.png)
+![img_3.png](https://github.com/daniilshamraev/aiogram-inline-paginations/blob/master/img/img_3.png?raw=true)
 
 *The order of entries is not lost.*
 

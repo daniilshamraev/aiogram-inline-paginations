@@ -1,8 +1,8 @@
 from itertools import islice
-from pprint import pprint
 from typing import Iterable, Any, Iterator, Callable, Coroutine
 
 from aiogram import types
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State
 from aiogram.types import CallbackQuery
@@ -21,7 +21,8 @@ class Paginator:
             callback_startswith: str = 'page_',
             size: int = 8,
             state: State | None = None,
-            page_separator: str = '/'
+            page_separator: str = '/',
+            func: Callable = None
     ):
         """
         Example: paginator = Paginator(data=kb, size=5)
@@ -31,7 +32,9 @@ class Paginator:
         :param size: Number of lines per page. Default = 8.
         :param state: Current state.
         :param page_separator: Separator for page numbers. Default = '/'.
+        :param func: Callback function when changes page.
         """
+        self.func = func
         self.page_separator = page_separator
         self._state = state
         self._size = size
@@ -50,9 +53,6 @@ class Paginator:
                     size=self._size
                 )
             )
-        pprint(
-            self._list_kb
-        )
 
     def __call__(
             self,
@@ -75,7 +75,8 @@ class Paginator:
         paginations = self._get_paginator(
             counts=len(self._list_kb),
             page=current_page,
-            page_separator=self.page_separator
+            page_separator=self.page_separator,
+            startswith=self._startswith
         )
         keyboard = types.InlineKeyboardMarkup(
             row_width=5,
@@ -107,7 +108,8 @@ class Paginator:
     def _get_paginator(
             counts: int,
             page: int,
-            page_separator: str = '/'
+            page_separator: str = '/',
+            startswith: str = 'page_'
     ) -> list[types.InlineKeyboardButton]:
         """
         :param counts: Counts total buttons.
@@ -123,13 +125,13 @@ class Paginator:
             paginations.append(
                 types.InlineKeyboardButton(
                     text='⏮️️',
-                    callback_data=f'page_0'
+                    callback_data=f'{startswith}0'
                 )
             )
             paginations.append(
                 types.InlineKeyboardButton(
                     text='⬅️',
-                    callback_data=f'page_{page - 1}'
+                    callback_data=f'{startswith}{page - 1}'
                 ),
             )
         paginations.append(
@@ -142,13 +144,13 @@ class Paginator:
             paginations.append(
                 types.InlineKeyboardButton(
                     text='➡️',
-                    callback_data=f'page_{page + 1}'
+                    callback_data=f'{startswith}{page + 1}'
                 )
             )
             paginations.append(
                 types.InlineKeyboardButton(
                     text='⏭️',
-                    callback_data=f'page_{counts}'
+                    callback_data=f'{startswith}{counts}'
                 )
             )
         return paginations
@@ -167,14 +169,17 @@ class Paginator:
         :return: Data for register handler pagination.
         """
 
-        async def _page(call: types.CallbackQuery):
+        async def _page(call: types.CallbackQuery, state: FSMContext):
             page = self._get_page(call)
+
+            await self.func(call, state)
 
             await call.message.edit_reply_markup(
                 reply_markup=self.__call__(
                     current_page=page
                 )
             )
+            await state.update_data({f'last_page_{self._startswith}': page})
 
         return \
             (_page, Text(startswith=self._startswith)), \
