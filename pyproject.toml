@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "aiogram-inline-paginations"
+version = "0.1.0"
+description = ""
+authors = ["Daniil Shamraev <shamraev.2002@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+setuptools = "^63.2.0"
+pip = "^22.1.2"
+wheel = "^0.37.1"
+aiogram = "^2.21"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
