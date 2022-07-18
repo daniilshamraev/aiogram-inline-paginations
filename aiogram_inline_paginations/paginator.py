@@ -22,7 +22,6 @@ class Paginator:
             size: int = 8,
             state: State | None = None,
             page_separator: str = '/',
-            func: Callable = None
     ):
         """
         Example: paginator = Paginator(data=kb, size=5)
@@ -34,7 +33,6 @@ class Paginator:
         :param page_separator: Separator for page numbers. Default = '/'.
         :param func: Callback function when changes page.
         """
-        self.func = func
         self.page_separator = page_separator
         self._state = state
         self._size = size
@@ -172,8 +170,6 @@ class Paginator:
         async def _page(call: types.CallbackQuery, state: FSMContext):
             page = self._get_page(call)
 
-            await self.func(call, state)
-
             await call.message.edit_reply_markup(
                 reply_markup=self.__call__(
                     current_page=page
@@ -183,4 +179,198 @@ class Paginator:
 
         return \
             (_page, Text(startswith=self._startswith)), \
+            {'state': self._state if self._state else '*'}
+
+    # def paginator_handler(self):
+    #     def decorator(func):
+    #         def _wrapper(context: dict, *args, **kwargs):
+    #             func(
+    #                 context={
+    #                     'startswith': self._startswith,
+    #                     'state': self._state,
+    #                     'data': self._list_kb,
+    #                     'size': self._size
+    #                 },
+    #                 *args,
+    #                 **kwargs
+    #             )
+    #
+    #         return _wrapper
+    #
+    #     return decorator
+
+
+class CheckBoxPaginator(Paginator):
+
+    def __init__(
+            self,
+            data: types.InlineKeyboardMarkup |
+                  Iterable[types.InlineKeyboardButton] |
+                  Iterable[Iterable[types.InlineKeyboardButton]],
+            callback_startswith: str = 'page_',
+            size: int = 8,
+            state: State | None = None,
+            page_separator: str = '/',
+            callback_startswith_button: str = 'select_',
+            confirm_text: str = 'Подтвердить'
+    ):
+        """
+        Example: paginator = Paginator(data=kb, size=5)
+
+        :param data: An iterable object that stores an InlineKeyboardButton.
+        :param callback_startswith: What should callback_data begin with in handler pagination. Default = 'page_'.
+        :param size: Number of lines per page. Default = 8.
+        :param state: Current state.
+        :param page_separator: Separator for page numbers. Default = '/'.
+        :param func: Callback function when changes page.
+        """
+        self.page_separator = page_separator
+        self._state = state
+        self._size = size
+        self._startswith = callback_startswith
+        self._startswith_button = callback_startswith_button
+        self._confirm_text = confirm_text
+        if isinstance(data, types.InlineKeyboardMarkup):
+            self._list_kb = list(
+                self._chunk(
+                    it=data.inline_keyboard,
+                    size=self._size
+                )
+            )
+        elif isinstance(data, Iterable):
+            self._list_kb = list(
+                self._chunk(
+                    it=data,
+                    size=self._size
+                )
+            )
+
+    def __call__(
+            self,
+            current_page=0,
+            selected: list[list[types.KeyboardButton]] = None,
+            *args,
+            **kwargs
+    ) -> types.InlineKeyboardMarkup:
+        """
+        Example:
+
+        await message.answer(
+            text='Some menu',
+            reply_markup=paginator()
+        )
+
+        :return: InlineKeyboardMarkup
+        """
+        _list_current_page = self._list_kb[current_page]
+
+        for l in _list_current_page:
+            for button in l:
+                button: types.InlineKeyboardButton
+                if selected:
+                    if button.callback_data in selected:
+                        if not button.text.endswith('✅'):
+                            button.text += ' ✅'
+                    else:
+                        if button.text.endswith(' ✅'):
+                            button.text = button.text[:-2]
+                else:
+                    if button.text.endswith(' ✅'):
+                        button.text = button.text[:-2]
+
+        paginations = self._get_paginator(
+            counts=len(self._list_kb),
+            page=current_page,
+            page_separator=self.page_separator,
+            startswith=self._startswith
+        )
+        keyboard = types.InlineKeyboardMarkup(
+            row_width=5,
+            inline_keyboard=_list_current_page
+        )
+
+        confirm_button = types.InlineKeyboardButton(
+            text=self._confirm_text,
+            callback_data=f'{self._confirm_text}confirm'
+        )
+        keyboard.add(*paginations)
+        keyboard.add(confirm_button)
+
+        return keyboard
+
+    def paginator_handler(self) -> tuple[
+        tuple[Callable[[CallbackQuery], Coroutine[Any, Any, None]], Text],
+        dict[str, State | str]
+    ]:
+        """
+        Example:
+
+        args, kwargs = paginator.paginator_handler()
+
+        dp.register_callback_query_handler(*args, **kwargs)
+
+        :return: Data for register handler pagination.
+        """
+
+        async def _page(call: types.CallbackQuery, state: FSMContext):
+            page = self._get_page(call)
+            data = await state.get_data()
+
+            selected = data.get(f'{self._startswith}selected', None)
+            if selected:
+                kb = self.__call__(current_page=page, selected=selected)
+            else:
+                kb = self.__call__(current_page=page)
+                await state.update_data({f'{self._startswith}selected': []})
+            await call.message.edit_reply_markup(
+                reply_markup=kb
+            )
+            await state.update_data({f'last_page_{self._startswith}': page})
+
+        return \
+            (_page, Text(startswith=self._startswith)), \
+            {'state': self._state if self._state else '*'}
+
+    def select_handler(self):
+
+        async def _select(call: types.CallbackQuery, state: FSMContext):
+            data = await state.get_data()
+            page = data.get(f'last_page_{self._startswith}', 0)
+
+            selected = data.get(f'{self._startswith}selected', [])
+
+            if selected:
+                selected: list
+
+                if call.data in selected:
+                    selected.remove(call.data)
+                    await state.update_data({f'{self._startswith}selected': selected})
+                else:
+                    selected.append(call.data)
+                    await state.update_data({f'{self._startswith}selected': selected})
+
+                await state.update_data({f'{self._startswith}selected': selected})
+
+                data = await state.get_data()
+                selected = data.get(f'{self._startswith}selected', None)
+
+                await call.message.edit_reply_markup(
+                    reply_markup=self.__call__(
+                        current_page=page,
+                        selected=selected
+                    )
+                )
+            else:
+                await state.update_data({f'{self._startswith}selected': [call.data, ]})
+                await call.message.edit_reply_markup(
+                    reply_markup=self.__call__(
+                        current_page=page,
+                        selected=[call.data, ]
+                    )
+                )
+
+            await state.update_data({f'last_page_{self._startswith}': page})
+
+        return \
+            (_select, Text(startswith=self._startswith_button)), \
             {'state': self._state if self._state else '*'}

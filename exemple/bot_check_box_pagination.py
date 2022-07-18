@@ -1,12 +1,11 @@
 import random
-from pprint import pprint
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import CommandStart
 from aiogram.utils.executor import Executor
 
-from aiogram_inline_paginations.paginator import Paginator
+from aiogram_inline_paginations.paginator import CheckBoxPaginator
 
 token = 'your token'
 
@@ -24,7 +23,7 @@ async def start(message: types.Message):
         *[
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
+                callback_data=f'pass_{str(random.randint(1000000, 10000000))}'
             ) for i in range(2)
         ]
     )
@@ -32,21 +31,21 @@ async def start(message: types.Message):
         *[
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
+                callback_data=f'pass_{str(random.randint(1000000, 10000000))}'
             ) for i in range(3)
         ]
     )
     kb.add(
         types.InlineKeyboardButton(
             text=str(random.randint(1000000, 10000000)),
-            callback_data='pass'
+            callback_data=f'pass_{str(random.randint(1000000, 10000000))}'
         )
     )
     kb.add(
         *[
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
+                callback_data=f'pass_{str(random.randint(1000000, 10000000))}'
             ) for i in range(2)
         ]
     )
@@ -54,19 +53,25 @@ async def start(message: types.Message):
         *[
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
+                callback_data=f'pass_{str(random.randint(1000000, 10000000))}'
             ) for i in range(50)
         ]
     )
-    paginator = Paginator(data=kb, size=5)
-    pprint(
-        kb.inline_keyboard
+    paginator = CheckBoxPaginator(
+        data=kb,
+        size=5,
+        callback_startswith='page_',
+        callback_startswith_button='pass_',
+        confirm_text='Approve'
     )
     await message.answer(
         text='Some menu',
         reply_markup=paginator()
     )
     args, kwargs = paginator.paginator_handler()
+    dp.register_callback_query_handler(*args, **kwargs)
+
+    args, kwargs = paginator.select_handler()
     dp.register_callback_query_handler(*args, **kwargs)
 
 

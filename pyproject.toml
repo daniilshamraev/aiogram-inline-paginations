@@ -2,7 +2,7 @@
 name = "aiogram-inline-paginations"
 readme = 'README.md'
 repository = 'https://github.com/daniilshamraev/aiogram-inline-paginations'
-version = "0.1.4"
+version = "0.1.8"
 description = "A simple library for aiogram that allows you to easily do pagination for any Inline keyboards."
 license = 'MIT'
 authors = ["Daniil Shamraev <shamraev.2002@gmail.com>"]
