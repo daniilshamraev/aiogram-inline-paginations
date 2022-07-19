@@ -1,7 +1,7 @@
 from itertools import islice
 from typing import Iterable, Any, Iterator, Callable, Coroutine
 
-from aiogram import types
+from aiogram import types, Dispatcher
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.dispatcher.filters.state import State
@@ -9,19 +9,16 @@ from aiogram.types import CallbackQuery
 
 
 class Paginator:
-    """
-    Class for pagination's in aiogram inline keyboards
-    """
-
     def __init__(
             self,
             data: types.InlineKeyboardMarkup |
                   Iterable[types.InlineKeyboardButton] |
                   Iterable[Iterable[types.InlineKeyboardButton]],
+            state: State = None,
             callback_startswith: str = 'page_',
             size: int = 8,
-            state: State | None = None,
             page_separator: str = '/',
+            dp: Dispatcher | None = None,
     ):
         """
         Example: paginator = Paginator(data=kb, size=5)
@@ -31,8 +28,8 @@ class Paginator:
         :param size: Number of lines per page. Default = 8.
         :param state: Current state.
         :param page_separator: Separator for page numbers. Default = '/'.
-        :param func: Callback function when changes page.
         """
+        self.dp = dp
         self.page_separator = page_separator
         self._state = state
         self._size = size
@@ -51,6 +48,10 @@ class Paginator:
                     size=self._size
                 )
             )
+
+    """
+    Class for pagination's in aiogram inline keyboards
+    """
 
     def __call__(
             self,
@@ -81,6 +82,9 @@ class Paginator:
             inline_keyboard=_list_current_page
         )
         keyboard.add(*paginations)
+
+        if self.dp:
+            self.paginator_handler()
 
         return keyboard
 
@@ -177,9 +181,16 @@ class Paginator:
             )
             await state.update_data({f'last_page_{self._startswith}': page})
 
-        return \
-            (_page, Text(startswith=self._startswith)), \
-            {'state': self._state if self._state else '*'}
+        if not self.dp:
+            return \
+                (_page, Text(startswith=self._startswith)), \
+                {'state': self._state if self._state else '*'}
+        else:
+            self.dp.register_callback_query_handler(
+                _page,
+                Text(startswith=self._startswith),
+                **{'state': self._state if self._state else '*'}
+            )
 
     # def paginator_handler(self):
     #     def decorator(func):
@@ -202,18 +213,16 @@ class Paginator:
 
 class CheckBoxPaginator(Paginator):
 
-    def __init__(
-            self,
-            data: types.InlineKeyboardMarkup |
-                  Iterable[types.InlineKeyboardButton] |
-                  Iterable[Iterable[types.InlineKeyboardButton]],
-            callback_startswith: str = 'page_',
-            size: int = 8,
-            state: State | None = None,
-            page_separator: str = '/',
-            callback_startswith_button: str = 'select_',
-            confirm_text: str = 'Подтвердить'
-    ):
+    def __init__(self, data: types.InlineKeyboardMarkup |
+                             Iterable[types.InlineKeyboardButton] |
+                             Iterable[Iterable[types.InlineKeyboardButton]],
+                 state: State = None,
+                 callback_startswith: str = 'page_',
+                 size: int = 8,
+                 page_separator: str = '/',
+                 callback_startswith_button: str = 'select_',
+                 confirm_text: str = 'Подтвердить',
+                 dp: Dispatcher | None = None):
         """
         Example: paginator = Paginator(data=kb, size=5)
 
@@ -222,8 +231,12 @@ class CheckBoxPaginator(Paginator):
         :param size: Number of lines per page. Default = 8.
         :param state: Current state.
         :param page_separator: Separator for page numbers. Default = '/'.
-        :param func: Callback function when changes page.
+        :param callback_startswith_button: Callback start with buttons.
+        :param confirm_text: Text on button confirm.
         """
+
+        super().__init__(data, state, callback_startswith, size, page_separator, dp)
+        self.dp = dp
         self.page_separator = page_separator
         self._state = state
         self._size = size
@@ -264,8 +277,8 @@ class CheckBoxPaginator(Paginator):
         """
         _list_current_page = self._list_kb[current_page]
 
-        for l in _list_current_page:
-            for button in l:
+        for lst in _list_current_page:
+            for button in lst:
                 button: types.InlineKeyboardButton
                 if selected:
                     if button.callback_data in selected:
@@ -295,6 +308,10 @@ class CheckBoxPaginator(Paginator):
         )
         keyboard.add(*paginations)
         keyboard.add(confirm_button)
+
+        if self.dp:
+            self.paginator_handler()
+            self.select_handler()
 
         return keyboard
 
@@ -327,9 +344,16 @@ class CheckBoxPaginator(Paginator):
             )
             await state.update_data({f'last_page_{self._startswith}': page})
 
-        return \
-            (_page, Text(startswith=self._startswith)), \
-            {'state': self._state if self._state else '*'}
+        if not self.dp:
+            return \
+                (_page, Text(startswith=self._startswith)), \
+                {'state': self._state if self._state else '*'}
+        else:
+            self.dp.register_callback_query_handler(
+                _page,
+                Text(startswith=self._startswith),
+                **{'state': self._state if self._state else '*'}
+            )
 
     def select_handler(self):
 
@@ -371,6 +395,13 @@ class CheckBoxPaginator(Paginator):
 
             await state.update_data({f'last_page_{self._startswith}': page})
 
-        return \
-            (_select, Text(startswith=self._startswith_button)), \
-            {'state': self._state if self._state else '*'}
+        if not self.dp:
+            return \
+                (_select, Text(startswith=self._startswith_button)), \
+                {'state': self._state if self._state else '*'}
+        else:
+            self.dp.register_callback_query_handler(
+                _select,
+                Text(startswith=self._startswith_button),
+                **{'state': self._state if self._state else '*'}
+            )

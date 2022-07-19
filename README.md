@@ -52,10 +52,6 @@ async def some_func(message: types.Message):
         text='Some menu',
         reply_markup=paginator()
     )
-
-    args, kwargs = paginator.paginator_handler()
-    dp.register_callback_query_handler(*args, **kwargs)
-
 ```
 
 ### Return paginator_handler()
@@ -131,15 +127,12 @@ async def start(message: types.Message):
         ]
     )
 
-    paginator = Paginator(data=kb, size=5)
+    paginator = Paginator(data=kb, size=5, dp=dp)
 
     await message.answer(
         text='Some menu',
         reply_markup=paginator()
     )
-
-    args, kwargs = paginator.paginator_handler()
-    dp.register_callback_query_handler(*args, **kwargs)
 
 
 if __name__ == '__main__':
@@ -154,7 +147,8 @@ import random
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters import CommandStart
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import CommandStart, Text
 from aiogram.utils.executor import Executor
 
 from aiogram_inline_paginations.paginator import CheckBoxPaginator
@@ -214,17 +208,22 @@ async def start(message: types.Message):
         size=5,
         callback_startswith='page_',
         callback_startswith_button='pass_',
-        confirm_text='Approve'
+        confirm_text='Approve',
+        dp=dp
     )
     await message.answer(
         text='Some menu',
         reply_markup=paginator()
     )
-    args, kwargs = paginator.paginator_handler()
-    dp.register_callback_query_handler(*args, **kwargs)
 
-    args, kwargs = paginator.select_handler()
-    dp.register_callback_query_handler(*args, **kwargs)
+
+@dp.callback_query_handler(Text(startswith='Approve', endswith='confirm'))
+async def approve(call: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    selected = data.get('page_selected', None)
+    await call.answer(
+        text='Your selected"\n'.join(selected)
+    )
 
 
 if __name__ == '__main__':
