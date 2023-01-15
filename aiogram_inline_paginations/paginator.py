@@ -79,9 +79,8 @@ class Paginator:
         )
         keyboard = types.InlineKeyboardMarkup(
             row_width=5,
-            inline_keyboard=_list_current_page
+            inline_keyboard=[*_list_current_page, *paginations]
         )
-        keyboard.inline_keyboard.append(*paginations)
 
         if self.dp:
             self.paginator_handler()
@@ -184,7 +183,7 @@ class Paginator:
         if not self.dp:
             return \
                 (_page, Text(startswith=self._startswith)), \
-                {'state': self._state if self._state else '*'}
+                    {'state': self._state if self._state else '*'}
         else:
             self.dp.callback_query.register(
                 _page,
@@ -347,7 +346,7 @@ class CheckBoxPaginator(Paginator):
         if not self.dp:
             return \
                 (_page, Text(startswith=self._startswith)), \
-                {'state': self._state if self._state else '*'}
+                    {'state': self._state if self._state else '*'}
         else:
             self.dp.callback_query.register(
                 _page,
@@ -398,7 +397,7 @@ class CheckBoxPaginator(Paginator):
         if not self.dp:
             return \
                 (_select, Text(startswith=self._startswith_button)), \
-                {'state': self._state if self._state else '*'}
+                    {'state': self._state if self._state else '*'}
         else:
             self.dp.callback_query.register(
                 _select,
