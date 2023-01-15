@@ -1,74 +1,68 @@
+import asyncio
 import random
 from pprint import pprint
 
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters import CommandStart
-from aiogram.utils.executor import Executor
+from aiogram.filters import CommandStart
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from aiogram_inline_paginations.paginator import Paginator
 
-token = 'your token'
+token = '5242892984:AAEbT_e5IEICUvMdfO6Mzf911oDd8HSrvVk'
 
 storage = MemoryStorage()
 bot = Bot(token=token)
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
 
 
-@dp.message_handler(CommandStart(), state='*')
+@dp.message(CommandStart())
 async def start(message: types.Message):
     await message.answer('Hello text')
 
-    kb = types.InlineKeyboardMarkup()  # some keyboard
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(2)
-        ]
-    )
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(3)
-        ]
-    )
-    kb.add(
+    kb = InlineKeyboardBuilder()  # some keyboard
+    kb.row(
         types.InlineKeyboardButton(
             text=str(random.randint(1000000, 10000000)),
             callback_data='pass'
         )
     )
-    kb.add(
-        *[
+    kb.row(
+        types.InlineKeyboardButton(
+            text=str(random.randint(1000000, 10000000)),
+            callback_data='pass'
+        )
+    )
+    kb.row(
+
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
                 callback_data='pass'
-            ) for i in range(2)
-        ]
+            ),
+
     )
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(50)
-        ]
+    kb.row(
+        types.InlineKeyboardButton(
+            text=str(random.randint(1000000, 10000000)),
+            callback_data='pass'
+        )
     )
-    paginator = Paginator(data=kb, size=5)
-    pprint(
-        kb.inline_keyboard
-    )
+    paginator = Paginator(data=kb.as_markup(), size=2, dp=dp)
+    # pprint(
+    #     kb.inline_keyboard
+    # )
     await message.answer(
         text='Some menu',
-        reply_markup=paginator()
+        reply_markup=paginator(),
+        # reply_markup=kb.as_markup()
     )
-    args, kwargs = paginator.paginator_handler()
-    dp.register_callback_query_handler(*args, **kwargs)
+    # args, kwargs = paginator.paginator_handler()
+    # dp.callback_query.register(*args, **kwargs)
 
 
 if __name__ == '__main__':
-    Executor(dp).start_polling()
+    async def start_bot():
+        await dp.start_polling(bot)
+
+    e = asyncio.new_event_loop()
+    e.run_until_complete(start_bot())

@@ -1,11 +1,13 @@
 from itertools import islice
-from typing import Iterable, Any, Iterator, Callable, Coroutine
+from pprint import pprint
+from typing import Iterable, Any, Iterator, Callable, Coroutine, Tuple
 
 from aiogram import types, Dispatcher
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 class Paginator:
@@ -13,7 +15,9 @@ class Paginator:
             self,
             data: types.InlineKeyboardMarkup |
                   Iterable[types.InlineKeyboardButton] |
-                  Iterable[Iterable[types.InlineKeyboardButton]],
+                  Iterable[Iterable[types.InlineKeyboardButton]] |
+                  InlineKeyboardBuilder
+            ,
             state: State = None,
             callback_startswith: str = 'page_',
             size: int = 8,
@@ -48,6 +52,15 @@ class Paginator:
                     size=self._size
                 )
             )
+        elif isinstance(data, InlineKeyboardBuilder):
+            self._list_kb = list(
+                self._chunk(
+                    it=data.export()[0],
+                    size=self._size
+                )
+            )
+        else:
+            raise ValueError(f'{data} is not valid data')
 
     """
     Class for pagination's in aiogram inline keyboards
@@ -77,10 +90,12 @@ class Paginator:
             page_separator=self.page_separator,
             startswith=self._startswith
         )
-        keyboard = types.InlineKeyboardMarkup(
-            row_width=5,
-            inline_keyboard=[*_list_current_page, *paginations]
-        )
+
+        keyboard = types.InlineKeyboardMarkup(inline_keyboard=[*_list_current_page, paginations])
+
+        # keyboard.add(_list_current_page)
+        # keyboard.row(paginations)
+        # keyboard.adjust(3)
 
         if self.dp:
             self.paginator_handler()
@@ -157,9 +172,7 @@ class Paginator:
         return paginations
 
     def paginator_handler(self) -> tuple[
-        tuple[Callable[[CallbackQuery], Coroutine[Any, Any, None]], Text],
-        dict[str, State | str]
-    ]:
+        tuple[Callable[[CallbackQuery, FSMContext], Coroutine[Any, Any, None]], Text], State | Callable[[Any], bool]]:
         """
         Example:
 
@@ -183,12 +196,12 @@ class Paginator:
         if not self.dp:
             return \
                 (_page, Text(startswith=self._startswith)), \
-                    {'state': self._state if self._state else '*'}
+                self._state if self._state else lambda c: True,
         else:
             self.dp.callback_query.register(
                 _page,
                 Text(startswith=self._startswith),
-                **{'state': self._state if self._state else '*'}
+                self._state if self._state else lambda c: True,
             )
 
     # def paginator_handler(self):
