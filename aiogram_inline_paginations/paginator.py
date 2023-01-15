@@ -2,9 +2,9 @@ from itertools import islice
 from typing import Iterable, Any, Iterator, Callable, Coroutine
 
 from aiogram import types, Dispatcher
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import Text
-from aiogram.dispatcher.filters.state import State
+from aiogram.filters import Text
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery
 
 
@@ -81,7 +81,7 @@ class Paginator:
             row_width=5,
             inline_keyboard=_list_current_page
         )
-        keyboard.add(*paginations)
+        keyboard.inline_keyboard.append(*paginations)
 
         if self.dp:
             self.paginator_handler()
@@ -186,7 +186,7 @@ class Paginator:
                 (_page, Text(startswith=self._startswith)), \
                 {'state': self._state if self._state else '*'}
         else:
-            self.dp.register_callback_query_handler(
+            self.dp.callback_query.register(
                 _page,
                 Text(startswith=self._startswith),
                 **{'state': self._state if self._state else '*'}
@@ -306,8 +306,8 @@ class CheckBoxPaginator(Paginator):
             text=self._confirm_text,
             callback_data=f'{self._confirm_text}confirm'
         )
-        keyboard.add(*paginations)
-        keyboard.add(confirm_button)
+        keyboard.inline_keyboard.append(*paginations)
+        keyboard.inline_keyboard.append(*confirm_button)
 
         if self.dp:
             self.paginator_handler()
@@ -349,7 +349,7 @@ class CheckBoxPaginator(Paginator):
                 (_page, Text(startswith=self._startswith)), \
                 {'state': self._state if self._state else '*'}
         else:
-            self.dp.register_callback_query_handler(
+            self.dp.callback_query.register(
                 _page,
                 Text(startswith=self._startswith),
                 **{'state': self._state if self._state else '*'}
@@ -400,7 +400,7 @@ class CheckBoxPaginator(Paginator):
                 (_select, Text(startswith=self._startswith_button)), \
                 {'state': self._state if self._state else '*'}
         else:
-            self.dp.register_callback_query_handler(
+            self.dp.callback_query.register(
                 _select,
                 Text(startswith=self._startswith_button),
                 **{'state': self._state if self._state else '*'}
