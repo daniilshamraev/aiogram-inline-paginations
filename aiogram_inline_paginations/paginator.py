@@ -2,7 +2,7 @@ from itertools import islice
 from pprint import pprint
 from typing import Iterable, Any, Iterator, Callable, Coroutine, Tuple
 
-from aiogram import types, Dispatcher
+from aiogram import types, Dispatcher, Router
 from aiogram.filters import Text
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
@@ -22,7 +22,7 @@ class Paginator:
             callback_startswith: str = 'page_',
             size: int = 8,
             page_separator: str = '/',
-            dp: Dispatcher | None = None,
+            dp: Dispatcher | Router | None = None,
     ):
         """
         Example: paginator = Paginator(data=kb, size=5)
@@ -171,8 +171,7 @@ class Paginator:
             )
         return paginations
 
-    def paginator_handler(self) -> tuple[
-        tuple[Callable[[CallbackQuery, FSMContext], Coroutine[Any, Any, None]], Text], State | Callable[[Any], bool]]:
+    def paginator_handler(self) -> tuple[Callable[[CallbackQuery, FSMContext], Coroutine[Any, Any, None]], Text]:
         """
         Example:
 
@@ -195,13 +194,11 @@ class Paginator:
 
         if not self.dp:
             return \
-                (_page, Text(startswith=self._startswith)), \
-                self._state if self._state else lambda c: True,
+                (_page, Text(startswith=self._startswith))
         else:
             self.dp.callback_query.register(
                 _page,
                 Text(startswith=self._startswith),
-                self._state if self._state else lambda c: True,
             )
 
     # def paginator_handler(self):
