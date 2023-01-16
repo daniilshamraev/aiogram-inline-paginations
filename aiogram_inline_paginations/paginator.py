@@ -55,7 +55,7 @@ class Paginator:
         elif isinstance(data, InlineKeyboardBuilder):
             self._list_kb = list(
                 self._chunk(
-                    it=data.export()[0],
+                    it=data.export(),
                     size=self._size
                 )
             )
@@ -90,7 +90,9 @@ class Paginator:
             page_separator=self.page_separator,
             startswith=self._startswith
         )
-
+        pprint(
+            [*_list_current_page, paginations]
+        )
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[*_list_current_page, paginations])
 
         # keyboard.add(_list_current_page)
@@ -176,7 +178,7 @@ class Paginator:
         Example:
 
         args, kwargs = paginator.paginator_handler()
-        
+
         dp.register_callback_query_handler(*args, **kwargs)
 
         :return: Data for register handler pagination.
