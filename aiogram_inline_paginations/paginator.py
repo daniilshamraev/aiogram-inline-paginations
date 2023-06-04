@@ -1,5 +1,4 @@
 from itertools import islice
-from pprint import pprint
 from typing import Iterable, Any, Iterator, Callable, Coroutine, Tuple
 
 from aiogram import types, Dispatcher, Router
@@ -90,9 +89,6 @@ class Paginator:
             page_separator=self.page_separator,
             startswith=self._startswith
         )
-        pprint(
-            [*_list_current_page, paginations]
-        )
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[*_list_current_page, paginations])
 
         # keyboard.add(_list_current_page)
@@ -110,7 +106,7 @@ class Paginator:
         :param call: CallbackQuery in paginator handler.
         :return: Current page.
         """
-        return int(call.data[-1])
+        return int(call.data[len("page_"):])
 
     @staticmethod
     def _chunk(it, size) -> Iterator[tuple[Any, ...]]:
@@ -168,7 +164,7 @@ class Paginator:
             paginations.append(
                 types.InlineKeyboardButton(
                     text='⏭️',
-                    callback_data=f'{startswith}{counts}'
+                    callback_data=f'{startswith}{counts - 1}'
                 )
             )
         return paginations
@@ -202,24 +198,6 @@ class Paginator:
                 _page,
                 Text(startswith=self._startswith),
             )
-
-    # def paginator_handler(self):
-    #     def decorator(func):
-    #         def _wrapper(context: dict, *args, **kwargs):
-    #             func(
-    #                 context={
-    #                     'startswith': self._startswith,
-    #                     'state': self._state,
-    #                     'data': self._list_kb,
-    #                     'size': self._size
-    #                 },
-    #                 *args,
-    #                 **kwargs
-    #             )
-    #
-    #         return _wrapper
-    #
-    #     return decorator
 
 
 class CheckBoxPaginator(Paginator):
