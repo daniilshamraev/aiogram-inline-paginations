@@ -1,5 +1,6 @@
 from itertools import islice
-from pprint import pprint
+from logging import getLogger
+from pprint import pformat
 from typing import Iterable, Any, Iterator, Callable, Coroutine, Tuple
 
 from aiogram import types, Dispatcher, Router
@@ -8,6 +9,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+logger = getLogger(__name__)
 
 
 class Paginator:
@@ -90,9 +93,7 @@ class Paginator:
             page_separator=self.page_separator,
             startswith=self._startswith
         )
-        pprint(
-            [*_list_current_page, paginations]
-        )
+        logger.debug("\n%s", pformat([*_list_current_page, paginations], indent=1, width=1))
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[*_list_current_page, paginations])
 
         # keyboard.add(_list_current_page)
