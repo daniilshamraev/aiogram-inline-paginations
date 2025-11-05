@@ -46,7 +46,7 @@ kb = types.InlineKeyboardMarkup()
 paginator = Paginator(data=kb, size=5)
 
 
-@dp.message_handler()
+@dp.message()
 async def some_func(message: types.Message):
     await message.answer(
         text='Some menu',
@@ -61,12 +61,13 @@ Data for registrations paginator.
 ## Example
 
 ```python
+import asyncio
 import random
 
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters import CommandStart
-from aiogram.utils.executor import Executor
+from aiogram.filters import CommandStart
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from aiogram_inline_paginations.paginator import Paginator
 
@@ -74,60 +75,25 @@ token = 'your token'
 
 storage = MemoryStorage()
 bot = Bot(token=token)
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
 
 
-@dp.message_handler(CommandStart(), state='*')
+@dp.message(CommandStart())
 async def start(message: types.Message):
     await message.answer('Hello text')
 
-    kb = types.InlineKeyboardMarkup()  # some keyboard
+    kb = InlineKeyboardBuilder()  # some keyboard
 
     '''To demonstrate, I will add more than 50 buttons to the keyboard and divide them into 5 lines per page'''
-    kb.add(
-        *[
+    for i in range(57):
+        kb.row(
             types.InlineKeyboardButton(
                 text=str(random.randint(1000000, 10000000)),
                 callback_data='pass'
-            ) for i in range(2)
-        ]
-    )
-
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(3)
-        ]
-    )
-
-    kb.add(
-        types.InlineKeyboardButton(
-            text=str(random.randint(1000000, 10000000)),
-            callback_data='pass'
+            )
         )
-    )
 
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(2)
-        ]
-    )
-
-    kb.add(
-        *[
-            types.InlineKeyboardButton(
-                text=str(random.randint(1000000, 10000000)),
-                callback_data='pass'
-            ) for i in range(50)
-        ]
-    )
-
-    paginator = Paginator(data=kb, size=5, dp=dp)
+    paginator = Paginator(data=kb.as_markup(), size=5, dp=dp)
 
     await message.answer(
         text='Some menu',
@@ -136,20 +102,23 @@ async def start(message: types.Message):
 
 
 if __name__ == '__main__':
-    Executor(dp).start_polling()
+    async def main():
+        await dp.start_polling(bot)
+
+    asyncio.run(main())
 
 ```
 
 ## Check box paginations exemple
 
 ```python
+import asyncio
 import random
 
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import CommandStart, Text
-from aiogram.utils.executor import Executor
+from aiogram.filters import CommandStart, Text
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from aiogram_inline_paginations.paginator import CheckBoxPaginator
 
@@ -157,11 +126,11 @@ token = 'your token'
 
 storage = MemoryStorage()
 bot = Bot(token=token)
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
 
 
-@dp.message_handler(CommandStart(), state='*')
-async def start(message: types.Message):
+@dp.message(CommandStart())
+async def start(message: types.Message, state: FSMContext):
     await message.answer('Hello text')
 
     kb = types.InlineKeyboardMarkup()  # some keyboard
@@ -217,17 +186,23 @@ async def start(message: types.Message):
     )
 
 
-@dp.callback_query_handler(Text(startswith='Approve', endswith='confirm'))
+@dp.callback_query(Text(startswith='Approve', endswith='confirm'))
 async def approve(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     selected = data.get('page_selected', None)
-    await call.answer(
-        text='Your selected"\n'.join(selected)
-    )
+    if selected:
+        await call.answer(
+            text='Your selected:\n' + '\n'.join(selected)
+        )
+    else:
+        await call.answer(text='Nothing selected')
 
 
 if __name__ == '__main__':
-    Executor(dp).start_polling()
+    async def main():
+        await dp.start_polling(bot)
+
+    asyncio.run(main())
 ```
 
 confirim callback:

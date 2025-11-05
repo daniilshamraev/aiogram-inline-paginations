@@ -1,10 +1,10 @@
+import asyncio
 import random
 
 from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import CommandStart, Text
-from aiogram.utils.executor import Executor
+from aiogram.filters import CommandStart, Text
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from aiogram_inline_paginations.paginator import CheckBoxPaginator
 
@@ -12,10 +12,10 @@ token = 'your token'
 
 storage = MemoryStorage()
 bot = Bot(token=token)
-dp = Dispatcher(bot, storage=storage)
+dp = Dispatcher(storage=storage)
 
 
-@dp.message_handler(CommandStart(), state='*')
+@dp.message(CommandStart())
 async def start(message: types.Message, state: FSMContext):
     await message.answer('Hello text')
 
@@ -63,7 +63,8 @@ async def start(message: types.Message, state: FSMContext):
         size=5,
         callback_startswith='page_',
         callback_startswith_button='pass_',
-        confirm_text='Approve'
+        confirm_text='Approve',
+        dp=dp
     )
     await message.answer(
         text='Some menu',
@@ -71,14 +72,20 @@ async def start(message: types.Message, state: FSMContext):
     )
 
 
-@dp.callback_query_handler(Text(startswith='Approve', endswith='confirm'))
+@dp.callback_query(Text(startswith='Approve', endswith='confirm'))
 async def approve(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     selected = data.get('page_selected', None)
-    await call.answer(
-        text='Your selected"\n'.join(selected)
-    )
+    if selected:
+        await call.answer(
+            text='Your selected:\n' + '\n'.join(selected)
+        )
+    else:
+        await call.answer(text='Nothing selected')
 
 
 if __name__ == '__main__':
-    Executor(dp).start_polling()
+    async def main():
+        await dp.start_polling(bot)
+
+    asyncio.run(main())

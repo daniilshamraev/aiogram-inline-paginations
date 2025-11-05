@@ -58,7 +58,7 @@ class Paginator:
         elif isinstance(data, InlineKeyboardBuilder):
             self._list_kb = list(
                 self._chunk(
-                    it=data.export(),
+                    it=data.as_markup().inline_keyboard,
                     size=self._size
                 )
             )
@@ -227,14 +227,15 @@ class CheckBoxPaginator(Paginator):
 
     def __init__(self, data: types.InlineKeyboardMarkup |
                              Iterable[types.InlineKeyboardButton] |
-                             Iterable[Iterable[types.InlineKeyboardButton]],
+                             Iterable[Iterable[types.InlineKeyboardButton]] |
+                             InlineKeyboardBuilder,
                  state: State = None,
                  callback_startswith: str = 'page_',
                  size: int = 8,
                  page_separator: str = '/',
                  callback_startswith_button: str = 'select_',
                  confirm_text: str = 'Подтвердить',
-                 dp: Dispatcher | None = None):
+                 dp: Dispatcher | Router | None = None):
         """
         Example: paginator = Paginator(data=kb, size=5)
 
@@ -259,6 +260,13 @@ class CheckBoxPaginator(Paginator):
             self._list_kb = list(
                 self._chunk(
                     it=data.inline_keyboard,
+                    size=self._size
+                )
+            )
+        elif isinstance(data, InlineKeyboardBuilder):
+            self._list_kb = list(
+                self._chunk(
+                    it=data.as_markup().inline_keyboard,
                     size=self._size
                 )
             )
@@ -318,8 +326,8 @@ class CheckBoxPaginator(Paginator):
             text=self._confirm_text,
             callback_data=f'{self._confirm_text}confirm'
         )
-        keyboard.inline_keyboard.append(*paginations)
-        keyboard.inline_keyboard.append(*confirm_button)
+        keyboard.inline_keyboard.append(paginations)
+        keyboard.inline_keyboard.append([confirm_button])
 
         if self.dp:
             self.paginator_handler()
