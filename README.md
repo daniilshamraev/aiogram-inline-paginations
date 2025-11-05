@@ -1,6 +1,26 @@
 # aiogram-inline-paginations
 
-Простая библиотека для aiogram, которая позволяет легко создавать пагинацию для любых Inline-клавиатур.
+[![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.1.11-blue.svg)](https://github.com/daniilshamraev/aiogram-inline-paginations)
+[![aiogram](https://img.shields.io/badge/aiogram-3.0+-blue.svg)](https://github.com/aiogram/aiogram)
+
+Простая и мощная библиотека для **aiogram 3**, которая позволяет легко создавать пагинацию для любых **inline-клавиатур** в **Telegram ботах**. Поддерживает автоматическую регистрацию обработчиков, работу с FSM состояниями и выбор элементов через чекбоксы.
+
+## Возможности (Features)
+
+- ✅ **Простая пагинация** - Легко создавайте пагинацию для любых inline-клавиатур
+- ✅ **Автоматическая регистрация** - Автоматическая регистрация обработчиков пагинации
+- ✅ **CheckBox пагинация** - Поддержка выбора элементов через чекбоксы (`CheckBoxPaginator`)
+- ✅ **FSM интеграция** - Полная поддержка FSM состояний aiogram
+- ✅ **Гибкая настройка** - Настраиваемый размер страницы, префиксы callback, разделители
+- ✅ **Совместимость** - Поддержка различных типов данных: `InlineKeyboardMarkup`, `InlineKeyboardBuilder`, списки кнопок
+- ✅ **Простота использования** - Минимальный код для быстрого старта
+
+## Требования (Requirements)
+
+- Python 3.10+
+- aiogram 3.0+
 
 ## Установка
 
@@ -349,6 +369,10 @@ paginator(current_page=999)  # Автоматически скорректиру
 ![img_3.png](https://github.com/daniilshamraev/aiogram-inline-paginations/blob/master/img/img_3.png?raw=true)
 
 *Порядок элементов сохраняется.*
+
+## Ключевые слова / Tags
+
+**aiogram**, **aiogram3**, **telegram bot**, **telegram**, **bot**, **pagination**, **inline keyboard**, **inline pagination**, **keyboard pagination**, **telegram pagination**, **aiogram pagination**, **inline buttons**, **telegram inline**, **python telegram**, **telegram python**, **telegram bot library**, **aiogram library**, **checkboxes**, **checkbox pagination**, **fsm**, **state machine**, **telegram fsm**, **aiogram fsm**
 
 ## Лицензия
 

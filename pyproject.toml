@@ -3,9 +3,46 @@ name = "aiogram-inline-paginations"
 readme = 'README.md'
 repository = 'https://github.com/daniilshamraev/aiogram-inline-paginations'
 version = "0.1.11"
-description = "A simple library for aiogram that allows you to easily do pagination for any Inline keyboards."
+description = "A simple and powerful library for aiogram 3 that allows you to easily create pagination for any inline keyboards in Telegram bots. Supports automatic handler registration, FSM state management, and checkbox selection."
 license = 'MIT'
 authors = ["Daniil Shamraev <shamraev.2002@gmail.com>"]
+keywords = [
+    "aiogram",
+    "aiogram3",
+    "telegram",
+    "telegram-bot",
+    "bot",
+    "pagination",
+    "inline-keyboard",
+    "inline-pagination",
+    "keyboard-pagination",
+    "telegram-pagination",
+    "aiogram-pagination",
+    "inline-buttons",
+    "telegram-inline",
+    "python-telegram",
+    "telegram-python",
+    "telegram-bot-library",
+    "aiogram-library",
+    "checkboxes",
+    "checkbox-pagination",
+    "fsm",
+    "state-machine",
+    "telegram-fsm",
+    "aiogram-fsm"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Communications :: Chat",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet",
+]
 packages = [
     { include = "aiogram_inline_paginations" }
 ]
