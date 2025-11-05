@@ -85,6 +85,16 @@ class Paginator:
 
         :return: InlineKeyboardMarkup
         """
+        # Проверка на пустой список клавиатур
+        if not self._list_kb:
+            raise ValueError("Cannot paginate empty keyboard list")
+        
+        # Проверка границ для current_page
+        if current_page < 0:
+            current_page = 0
+        elif current_page >= len(self._list_kb):
+            current_page = len(self._list_kb) - 1
+        
         _list_current_page = self._list_kb[current_page]
 
         paginations = self._get_paginator(
@@ -105,13 +115,16 @@ class Paginator:
 
         return keyboard
 
-    @staticmethod
-    def _get_page(call: types.CallbackQuery) -> int:
+    def _get_page(self, call: types.CallbackQuery) -> int:
         """
         :param call: CallbackQuery in paginator handler.
         :return: Current page.
         """
-        return int(call.data[-1])
+        # Извлекаем число после префикса startswith
+        if call.data.startswith(self._startswith):
+            page_str = call.data[len(self._startswith):]
+            return int(page_str)
+        raise ValueError(f"Callback data '{call.data}' does not start with '{self._startswith}'")
 
     @staticmethod
     def _chunk(it, size) -> Iterator[tuple[Any, ...]]:
@@ -249,39 +262,15 @@ class CheckBoxPaginator(Paginator):
         """
 
         super().__init__(data, state, callback_startswith, size, page_separator, dp)
-        self.dp = dp
-        self.page_separator = page_separator
-        self._state = state
-        self._size = size
-        self._startswith = callback_startswith
+        # Устанавливаем только специфичные для CheckBoxPaginator параметры
+        # Остальные параметры уже установлены в родительском классе
         self._startswith_button = callback_startswith_button
         self._confirm_text = confirm_text
-        if isinstance(data, types.InlineKeyboardMarkup):
-            self._list_kb = list(
-                self._chunk(
-                    it=data.inline_keyboard,
-                    size=self._size
-                )
-            )
-        elif isinstance(data, InlineKeyboardBuilder):
-            self._list_kb = list(
-                self._chunk(
-                    it=data.as_markup().inline_keyboard,
-                    size=self._size
-                )
-            )
-        elif isinstance(data, Iterable):
-            self._list_kb = list(
-                self._chunk(
-                    it=data,
-                    size=self._size
-                )
-            )
 
     def __call__(
             self,
             current_page=0,
-            selected: list[list[types.KeyboardButton]] = None,
+            selected: list[str] | None = None,
             *args,
             **kwargs
     ) -> types.InlineKeyboardMarkup:
@@ -295,6 +284,16 @@ class CheckBoxPaginator(Paginator):
 
         :return: InlineKeyboardMarkup
         """
+        # Проверка на пустой список клавиатур
+        if not self._list_kb:
+            raise ValueError("Cannot paginate empty keyboard list")
+        
+        # Проверка границ для current_page
+        if current_page < 0:
+            current_page = 0
+        elif current_page >= len(self._list_kb):
+            current_page = len(self._list_kb) - 1
+        
         _list_current_page = self._list_kb[current_page]
 
         for lst in _list_current_page:
@@ -384,36 +383,25 @@ class CheckBoxPaginator(Paginator):
             selected = data.get(f'{self._startswith}selected', [])
 
             if selected:
-                selected: list
-
                 if call.data in selected:
                     selected.remove(call.data)
-                    await state.update_data({f'{self._startswith}selected': selected})
                 else:
                     selected.append(call.data)
-                    await state.update_data({f'{self._startswith}selected': selected})
-
-                await state.update_data({f'{self._startswith}selected': selected})
-
-                data = await state.get_data()
-                selected = data.get(f'{self._startswith}selected', None)
-
-                await call.message.edit_reply_markup(
-                    reply_markup=self.__call__(
-                        current_page=page,
-                        selected=selected
-                    )
-                )
             else:
-                await state.update_data({f'{self._startswith}selected': [call.data, ]})
-                await call.message.edit_reply_markup(
-                    reply_markup=self.__call__(
-                        current_page=page,
-                        selected=[call.data, ]
-                    )
-                )
+                selected = [call.data]
 
-            await state.update_data({f'last_page_{self._startswith}': page})
+            # Обновляем состояние один раз со всеми данными
+            await state.update_data({
+                f'{self._startswith}selected': selected,
+                f'last_page_{self._startswith}': page
+            })
+
+            await call.message.edit_reply_markup(
+                reply_markup=self.__call__(
+                    current_page=page,
+                    selected=selected
+                )
+            )
 
         if not self.dp:
             return \
